@@ -1,0 +1,12 @@
+# Custom Netlify Headers for Cache Busting
+# Forces browsers to bypass caching and load fresh assets instantly
+
+/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
