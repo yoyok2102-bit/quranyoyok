@@ -12,6 +12,28 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
+    <!-- Force clear any old service workers and cache from the old Cache-First system -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) {
+                    registration.unregister().then(function() {
+                        console.log('[Anti-Cache] Unregistered old SW successfully');
+                    });
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                for (let key of keys) {
+                    caches.delete(key).then(function() {
+                        console.log('[Anti-Cache] Deleted old cache successfully:', key);
+                    });
+                }
+            });
+        }
+    </script>
+
     <!-- PWA Settings -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d5c3a">
@@ -27,7 +49,7 @@
         rel="stylesheet">
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2.0">
     <!-- Visual Error Boundary for Pair Programming Diagnostics -->
     <script>
         window.addEventListener('error', function (e) {
@@ -361,9 +383,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
-    <script src="prayer.js"></script>
-    <script src="compass.js"></script>
+    <script src="app.js?v=2.0"></script>
+    <script src="prayer.js?v=2.0"></script>
+    <script src="compass.js?v=2.0"></script>
 </body>
 
 </html>
