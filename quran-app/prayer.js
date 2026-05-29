@@ -1,4 +1,4 @@
-/* Logic Waktu Shalat & Geolocation (prayer.js) */
+/* Logic Waktu Shalat, Pilihan Suara Adzan, & Geolocation (prayer.js) */
 
 const PRAYER_STATE = {
     lat: -6.2088,   // Default Jakarta Lat
@@ -10,6 +10,15 @@ const PRAYER_STATE = {
     countdownInterval: null,
     isAdhanEnabled: false,
     adhanPlayed: {} // Prevent double adhan playing in the same minute
+};
+
+// Elegant Adhan Audio Streams
+const ADHAN_TRACKS = {
+    azan1: "https://www.islamcan.com/audio/adhan/azan1.mp3",   // Mekkah
+    azan2: "https://www.islamcan.com/audio/adhan/azan2.mp3",   // Madinah
+    azan15: "https://www.islamcan.com/audio/adhan/azan15.mp3", // Mesir (Abdul Basit)
+    azan3: "https://www.islamcan.com/audio/adhan/azan3.mp3",   // Al-Aqsa
+    azan14: "https://www.islamcan.com/audio/adhan/azan14.mp3"  // Turki
 };
 
 // Cache DOM prayer elements
@@ -25,6 +34,8 @@ function initializePrayerDOM() {
         nextPrayerTimer: document.getElementById('nextPrayerTimer'),
         nextPrayerName: document.getElementById('nextPrayerName'),
         toggleAdhanNotification: document.getElementById('toggleAdhanNotification'),
+        selectAdhanStyle: document.getElementById('selectAdhanStyle'),
+        btnPlayAdhanTest: document.getElementById('btnPlayAdhanTest'),
         adhanAudio: document.getElementById('adhanAudio'),
         prayerCalculationMethod: document.getElementById('prayerCalculationMethod'),
         toggleGPS: document.getElementById('toggleGPS')
@@ -60,9 +71,52 @@ function initPrayerTimes() {
         PRAYER_STATE.isAdhanEnabled = e.target.checked;
         localStorage.setItem('annuur_adhan_enabled', PRAYER_STATE.isAdhanEnabled);
         if (PRAYER_STATE.isAdhanEnabled) {
-            // Test trigger to request audio context allowance on user interaction
-            PRAYER_DOM.adhanAudio.volume = 0.5;
-            showToast("Notifikasi Adzan diaktifkan.");
+            PRAYER_DOM.adhanAudio.volume = 0.8;
+            showToast("Notifikasi & Alarm Adzan diaktifkan.");
+            requestNotificationPermission();
+        }
+    });
+
+    PRAYER_DOM.selectAdhanStyle.addEventListener('change', (e) => {
+        localStorage.setItem('annuur_adhan_style', e.target.value);
+        showToast("Suara adzan terpilih berhasil diubah.");
+    });
+
+    // Test Play Adhan button logic
+    let isTestingAdhan = false;
+    PRAYER_DOM.btnPlayAdhanTest.addEventListener('click', () => {
+        if (isTestingAdhan) {
+            PRAYER_DOM.adhanAudio.pause();
+            PRAYER_DOM.adhanAudio.currentTime = 0;
+            isTestingAdhan = false;
+            PRAYER_DOM.btnPlayAdhanTest.innerHTML = '<i data-lucide="play"></i> Dengar Tes Adzan';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            showToast("Tes Adzan dihentikan.");
+        } else {
+            const style = PRAYER_DOM.selectAdhanStyle.value;
+            const trackUrl = ADHAN_TRACKS[style] || ADHAN_TRACKS.azan1;
+            
+            PRAYER_DOM.adhanAudio.src = trackUrl;
+            PRAYER_DOM.adhanAudio.load();
+            PRAYER_DOM.adhanAudio.play()
+                .then(() => {
+                    isTestingAdhan = true;
+                    PRAYER_DOM.btnPlayAdhanTest.innerHTML = '<i data-lucide="square"></i> Hentikan Tes';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    showToast("Memutar Tes Adzan...");
+                })
+                .catch(err => {
+                    console.error("Play test failed:", err);
+                    showToast("Gagal memutar tes. Harap berikan izin interaksi terlebih dahulu.");
+                });
+        }
+    });
+
+    PRAYER_DOM.adhanAudio.addEventListener('ended', () => {
+        if (isTestingAdhan) {
+            isTestingAdhan = false;
+            PRAYER_DOM.btnPlayAdhanTest.innerHTML = '<i data-lucide="play"></i> Dengar Tes Adzan';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
     });
 
@@ -87,6 +141,23 @@ function initPrayerTimes() {
     });
 }
 
+function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log("Browser ini tidak mendukung notifikasi web.");
+        return;
+    }
+    
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                showToast("Izin notifikasi disetujui! Anda akan menerima peringatan shalat.");
+            } else {
+                showToast("Izin notifikasi ditolak. Anda tidak akan melihat peringatan teks.");
+            }
+        });
+    }
+}
+
 function loadPrayerSettings() {
     const savedMethod = localStorage.getItem('annuur_prayer_method');
     if (savedMethod) {
@@ -97,6 +168,11 @@ function loadPrayerSettings() {
     if (savedAdhan) {
         PRAYER_STATE.isAdhanEnabled = savedAdhan === 'true';
         PRAYER_DOM.toggleAdhanNotification.checked = PRAYER_STATE.isAdhanEnabled;
+    }
+
+    const savedAdhanStyle = localStorage.getItem('annuur_adhan_style');
+    if (savedAdhanStyle) {
+        PRAYER_DOM.selectAdhanStyle.value = savedAdhanStyle;
     }
 
     const savedGPS = localStorage.getItem('annuur_gps_enabled');
@@ -332,11 +408,27 @@ function triggerAdhanAlarm(prayerName) {
     if (PRAYER_STATE.adhanPlayed[prayerName] === today) return;
     PRAYER_STATE.adhanPlayed[prayerName] = today;
 
+    // Trigger local push notification (Android & iOS)
+    if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+            new Notification(`Waktu Shalat ${prayerName} Tiba!`, {
+                body: `Mari tunaikan shalat ${prayerName} untuk wilayah ${PRAYER_STATE.cityName}.`,
+                icon: 'icons/icon.png',
+                tag: 'sholat-alert',
+                requireInteraction: true
+            });
+        } catch (e) {
+            console.error("Local Notification failed:", e);
+        }
+    }
+
     showToast(`🕌 Waktu shalat ${prayerName} telah tiba!`);
     
     // Play beautiful public Adhan track
-    // Use an elegant Adhan MP3 stream
-    PRAYER_DOM.adhanAudio.src = "https://www.islamcan.com/audio/adhan/azan1.mp3"; // Beautiful Mekkah Adhan
+    const style = PRAYER_DOM.selectAdhanStyle.value;
+    const trackUrl = ADHAN_TRACKS[style] || ADHAN_TRACKS.azan1;
+
+    PRAYER_DOM.adhanAudio.src = trackUrl;
     PRAYER_DOM.adhanAudio.load();
     PRAYER_DOM.adhanAudio.play()
         .then(() => {
