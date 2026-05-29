@@ -2,6 +2,22 @@
 <html lang="id">
 
 <head>
+    <!-- Force automatic single hard-reload on first session load to bypass all cache layers -->
+    <script>
+        if (!sessionStorage.getItem('annuur_session_fresh')) {
+            sessionStorage.setItem('annuur_session_fresh', 'true');
+            if ('caches' in window) {
+                caches.keys().then(function(keys) {
+                    for (let key of keys) caches.delete(key);
+                }).then(function() {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
+        }
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Al-Quran Premium, Waktu Shalat & Kiblat</title>
