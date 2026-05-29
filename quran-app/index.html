@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al-Quran Premium, Waktu Shalat & Kiblat</title>
+    <meta name="description"
+        content="Aplikasi Web Al-Quran Digital 30 Juz lengkap dengan terjemahan Bahasa Indonesia, audio murottal, jadwal waktu shalat otomatis sesuai lokasi, dan penunjuk arah kiblat interaktif.">
+    <!-- Prevent aggressive browser disk caching for index.html -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Force clear any old service workers and cache from the old Cache-First system -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) {
+                    registration.unregister().then(function() {
+                        console.log('[Anti-Cache] Unregistered old SW successfully');
+                    });
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                for (let key of keys) {
+                    caches.delete(key).then(function() {
+                        console.log('[Anti-Cache] Deleted old cache successfully:', key);
+                    });
+                }
+            });
+        }
+    </script>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d5c3a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="icons/icon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600;700;800&family=Scheherazade+New:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css?v=2.0">
+    <!-- Visual Error Boundary for Pair Programming Diagnostics -->
+    <script>
+        window.addEventListener('error', function (e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = '#e74c3c';
+            errorDiv.style.color = '#fff';
+            errorDiv.style.padding = '20px';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.fontSize = '14px';
+            errorDiv.style.lineHeight = '1.5';
+            errorDiv.style.boxShadow = '0 5px 25px rgba(0,0,0,0.5)';
+            errorDiv.innerHTML = '<h3 style="margin:0 0 10px 0;">⚠️ Terdeteksi Galat JavaScript:</h3>' +
+                '<strong>Pesan:</strong> ' + e.message + '<br>' +
+                '<strong>Berkas:</strong> ' + e.filename + '<br>' +
+                '<strong>Baris:</strong> ' + e.lineno + ':' + e.colno + '<br><br>' +
+                '<button onclick="this.parentElement.remove()" style="background:#fff; color:#e74c3c; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">Tutup</button>';
+            document.body.appendChild(errorDiv);
+        });
+    </script>
+</head>
+
+<body class="theme-emerald">
+    <!-- App Container -->
+    <div class="app-container" id="appContainer">
+        <!-- Premium Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <i data-lucide="book-open" class="icon-gold"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>An-Nuur</h1>
+                    <span class="sub-brand">Quran & Waktu Shalat</span>
+                    <span class="sub-brand">by Mas Yoyok</span>
+                </div>
+            </div>
+
+            <div class="header-status" id="headerLocation">
+                <i data-lucide="map-pin"></i>
+                <span id="headerCityName">Mendeteksi Lokasi...</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="icon-btn" id="themeToggle" title="Ubah Tema">
+                    <i data-lucide="moon"></i>
+                </button>
+                <button class="icon-btn" id="settingsToggle" title="Pengaturan">
+                    <i data-lucide="settings"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main" id="mainContent">
+            <!-- Loading Overlay -->
+            <div class="loading-screen" id="globalLoading">
+                <div class="spinner"></div>
+                <p>Memuat berkah...</p>
+            </div>
+
+            <!-- Page 1: Quran Dashboard -->
+            <section id="page-quran" class="app-page active">
+                <div class="hero-card">
+                    <div class="hero-content">
+                        <span class="hero-badge">Terakhir Dibaca</span>
+                        <h2 id="lastReadSurah">Al-Fatihah</h2>
+                        <p id="lastReadAyah">Ayat 1 • Juz 1</p>
+                        <button class="btn-primary" id="btnResumeRead">
+                            <i data-lucide="play-circle"></i> Lanjutkan Membaca
+                        </button>
+                    </div>
+                    <div class="hero-art">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                </div>
+
+                <div class="search-and-tabs">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="quranSearch" placeholder="Cari Surah (contoh: Yasin, Al-Kahfi)...">
+                    </div>
+                    <div class="tabs-container">
+                        <button class="tab-btn active" id="tabSurah">Surah</button>
+                        <button class="tab-btn" id="tabJuz">Juz</button>
+                        <button class="tab-btn" id="tabBookmark">Favorit</button>
+                    </div>
+                </div>
+
+                <!-- Surah / Juz List Container -->
+                <div class="quran-list-container" id="quranGrid">
+                    <!-- Cards will be populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Page 2: Surah Detail Viewer -->
+            <section id="page-surah-detail" class="app-page">
+                <div class="detail-header">
+                    <button class="icon-btn back-btn" id="btnBackToQuran">
+                        <i data-lucide="arrow-left"></i>
+                    </button>
+                    <div class="surah-info-center">
+                        <h2 id="detailSurahName">Surah Name</h2>
+                        <p id="detailSurahDesc">Arti Surah • 0 Ayat</p>
+                    </div>
+                    <button class="icon-btn" id="btnPlayFullSurah" title="Putar Murottal">
+                        <i data-lucide="play"></i>
+                    </button>
+                </div>
+
+                <div class="bismillah-container" id="bismillahContainer">
+                    بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+                </div>
+
+                <!-- Ayahs List -->
+                <div class="ayahs-container" id="ayahsList">
+                    <!-- Ayah rows will be populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Page 3: Waktu Sholat -->
+            <section id="page-prayer" class="app-page">
+                <div class="prayer-countdown-card">
+                    <span class="countdown-label" id="nextPrayerLabel">WAKTU SHALAT BERIKUTNYA</span>
+                    <h2 class="countdown-timer" id="nextPrayerTimer">00:00:00</h2>
+                    <p class="countdown-sub" id="nextPrayerName">Menuju Dzuhur</p>
+                </div>
+
+                <div class="prayer-location-card glass-card">
+                    <div class="location-details">
+                        <i data-lucide="navigation"></i>
+                        <div>
+                            <h3 id="prayerRegion">Mendeteksi Lokasi...</h3>
+                            <p id="prayerCoordinates">Lat: -, Lng: -</p>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" id="btnRefreshLocation">
+                        <i data-lucide="refresh-cw"></i> Perbarui GPS
+                    </button>
+                </div>
+
+                <div class="prayer-schedule-container" id="prayerScheduleGrid">
+                    <!-- Sholat timing cards -->
+                    <div class="prayer-card" data-prayer="Imsak">
+                        <div class="prayer-name">Imsak</div>
+                        <div class="prayer-time" id="time-Imsak">--:--</div>
+                    </div>
+                    <div class="prayer-card" data-prayer="Fajr">
+                        <div class="prayer-name">Subuh</div>
+                        <div class="prayer-time" id="time-Fajr">--:--</div>
+                    </div>
+                    <div class="prayer-card" data-prayer="Dhuhr">
+                        <div class="prayer-name">Dzuhur</div>
+                        <div class="prayer-time" id="time-Dhuhr">--:--</div>
+                    </div>
+                    <div class="prayer-card" data-prayer="Asr">
+                        <div class="prayer-name">Ashar</div>
+                        <div class="prayer-time" id="time-Asr">--:--</div>
+                    </div>
+                    <div class="prayer-card" data-prayer="Maghrib">
+                        <div class="prayer-name">Maghrib</div>
+                        <div class="prayer-time" id="time-Maghrib">--:--</div>
+                    </div>
+                    <div class="prayer-card" data-prayer="Isha">
+                        <div class="prayer-name">Isya</div>
+                        <div class="prayer-time" id="time-Isha">--:--</div>
+                    </div>
+                </div>
+
+                <div class="prayer-settings glass-card">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Notifikasi Adzan</h4>
+                            <p>Putar suara Adzan saat waktu shalat tiba</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleAdhanNotification">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Page 4: Kiblat Compass -->
+            <section id="page-qibla" class="app-page">
+                <div class="compass-header">
+                    <h2>Penunjuk Arah Kiblat</h2>
+                    <p>Putar perangkat Anda untuk menyelaraskan dengan jarum kiblat emas.</p>
+                </div>
+
+                <div class="compass-viewport">
+                    <div class="compass-wrapper" id="compassContainer">
+                        <div class="compass-ring"></div>
+                        <div class="compass-card-dial">
+                            <span class="direction-label north">U</span>
+                            <span class="direction-label east">T</span>
+                            <span class="direction-label south">S</span>
+                            <span class="direction-label west">B</span>
+                        </div>
+                        <div class="kaaba-icon-marker">🕋</div>
+                        <div class="compass-needle" id="qiblaNeedle">
+                            <div class="needle-north"></div>
+                            <div class="needle-south"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qibla-info-panel glass-card">
+                    <div class="info-stat">
+                        <span class="stat-label">Sudut Kiblat</span>
+                        <span class="stat-val" id="qiblaAngleText">--° N</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="stat-label">Deviasi Kompas</span>
+                        <span class="stat-val" id="compassHeadingText">--°</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-val accent" id="sensorStatus">GPS Aktif</span>
+                    </div>
+                </div>
+
+                <div class="sensor-warning" id="compassPermissionCard" style="display: none;">
+                    <p><i data-lucide="shield-alert"></i> Perangkat mobile mendeteksi sensor orientasi tetapi butuh izin
+                        akses.</p>
+                    <button class="btn-primary" id="btnRequestSensor">Aktifkan Sensor Magnetik</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Global Floating Audio Player (Premium Spotify-like layout) -->
+        <div class="floating-audio-player" id="globalAudioBar">
+            <div class="audio-track-info">
+                <span class="audio-title" id="audioTrackTitle">Surah Murottal</span>
+                <span class="audio-subtitle" id="audioTrackSub">Memuat qori...</span>
+            </div>
+            <div class="audio-controls">
+                <button class="audio-btn" id="audioBtnPrev" title="Sebelumnya">
+                    <i data-lucide="skip-back"></i>
+                </button>
+                <button class="audio-btn main-play" id="audioBtnPlay" title="Putar">
+                    <i data-lucide="play"></i>
+                </button>
+                <button class="audio-btn" id="audioBtnNext" title="Berikutnya">
+                    <i data-lucide="skip-forward"></i>
+                </button>
+            </div>
+            <div class="audio-progress-container">
+                <div class="audio-progress-bar" id="audioProgressBar"></div>
+            </div>
+            <button class="audio-btn-close" id="audioBtnClose">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal-backdrop" id="settingsModal">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h3>Pengaturan Aplikasi</h3>
+                    <button class="icon-btn" id="closeSettings">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>Ukuran Font Arab</label>
+                        <input type="range" id="arabicFontSize" min="20" max="48" value="32">
+                        <div class="arabic-preview" id="arabicFontPreview">بِسْمِ اللّٰهِ</div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Tampilkan Terjemahan</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleTranslation" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>Tampilkan Transliterasi (Latin)</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleTransliteration" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>Akses Lokasi Otomatis (GPS)</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleGPS">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>Metode Waktu Shalat</label>
+                        <select id="prayerCalculationMethod">
+                            <option value="20" selected>Kemenag RI (Indonesia)</option>
+                            <option value="1">MWL (Muslim World League)</option>
+                            <option value="2">ISNA (North America)</option>
+                            <option value="3">Egypt</option>
+                            <option value="4">Umm Al-Qura (Makkah)</option>
+                            <option value="5">Karachi</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Audio Elements (Hidden) -->
+        <audio id="adhanAudio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav"
+            preload="auto"></audio>
+        <audio id="quranAudio" preload="auto"></audio>
+
+        <!-- Bottom Tab Navigation -->
+        <nav class="app-nav">
+            <button class="nav-item active" data-page="quran">
+                <i data-lucide="book-marked"></i>
+                <span>Al-Quran</span>
+            </button>
+            <button class="nav-item" data-page="prayer">
+                <i data-lucide="clock"></i>
+                <span>Shalat</span>
+            </button>
+            <button class="nav-item" data-page="qibla">
+                <i data-lucide="compass"></i>
+                <span>Kiblat</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js?v=2.0"></script>
+    <script src="prayer.js?v=2.0"></script>
+    <script src="compass.js?v=2.0"></script>
+</body>
+
+</html>
