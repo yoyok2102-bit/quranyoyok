@@ -2,67 +2,7 @@
 <html lang="id">
 
 <head>
-    <!-- Force automatic single hard-reload on first session load or manual refresh to bypass all cache layers -->
-    <script>
-        (function() {
-            // Function to perform parallel cache-busting fetches and reload
-            function triggerForceHardReload() {
-                // Delete Service Worker Caches
-                if ('caches' in window) {
-                    caches.keys().then(function(keys) {
-                        for (let key of keys) caches.delete(key);
-                    });
-                }
 
-                // Force browser HTTP Cache (Disk/Memory Cache) to refresh all core files directly from Netlify network
-                const coreFiles = [
-                    './index.html',
-                    './style.css?v=2.0',
-                    './app.js?v=2.0',
-                    './prayer.js?v=2.0',
-                    './compass.js?v=2.0'
-                ];
-
-                Promise.all(
-                    coreFiles.map(function(file) {
-                        return fetch(file, { cache: 'reload' }).catch(function(err) {
-                            console.warn('Failed to pre-fetch fresh cache for:', file, err);
-                        });
-                    })
-                ).then(function() {
-                    console.log('[Cache-Reload] All files fetched fresh. Reloading page...');
-                    window.location.reload();
-                }).catch(function() {
-                    window.location.reload();
-                });
-            }
-
-            // 1. Detect if it's the very first time entering the session
-            const isFirstSession = !sessionStorage.getItem('annuur_session_fresh');
-            
-            // 2. Detect if the user clicked the manual browser refresh button (F5 / Reload)
-            let isUserRefresh = false;
-            if (window.performance && window.performance.getEntriesByType) {
-                const navs = performance.getEntriesByType('navigation');
-                if (navs.length > 0 && navs[0].type === 'reload') {
-                    isUserRefresh = true;
-                }
-            }
-
-            if (isFirstSession) {
-                sessionStorage.setItem('annuur_session_fresh', 'true');
-                triggerForceHardReload();
-            } else if (isUserRefresh) {
-                if (!sessionStorage.getItem('annuur_is_hard_reloading')) {
-                    sessionStorage.setItem('annuur_is_hard_reloading', 'true');
-                    triggerForceHardReload();
-                } else {
-                    // This was our programmatic hard reload following the fetch, clean up flag
-                    sessionStorage.removeItem('annuur_is_hard_reloading');
-                }
-            }
-        })();
-    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
