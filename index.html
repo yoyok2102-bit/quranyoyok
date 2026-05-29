@@ -6,15 +6,35 @@
     <script>
         if (!sessionStorage.getItem('annuur_session_fresh')) {
             sessionStorage.setItem('annuur_session_fresh', 'true');
+            
+            // Delete Service Worker Caches
             if ('caches' in window) {
                 caches.keys().then(function(keys) {
                     for (let key of keys) caches.delete(key);
-                }).then(function() {
-                    window.location.reload();
                 });
-            } else {
-                window.location.reload();
             }
+
+            // Force browser HTTP Cache (Disk/Memory Cache) to refresh all core files directly from Netlify network
+            const coreFiles = [
+                './index.html',
+                './style.css?v=2.0',
+                './app.js?v=2.0',
+                './prayer.js?v=2.0',
+                './compass.js?v=2.0'
+            ];
+
+            Promise.all(
+                coreFiles.map(function(file) {
+                    return fetch(file, { cache: 'reload' }).catch(function(err) {
+                        console.warn('Failed to pre-fetch fresh cache for:', file, err);
+                    });
+                })
+            ).then(function() {
+                console.log('[Cache-Reload] All files fetched fresh. Reloading page...');
+                window.location.reload();
+            }).catch(function() {
+                window.location.reload();
+            });
         }
     </script>
 
