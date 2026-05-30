@@ -266,7 +266,7 @@
                 </div>
 
                 <div class="compass-viewport">
-                    <div class="compass-wrapper" id="compassContainer">
+                    <div class="compass-wrapper" id="compassContainer" style="cursor: pointer;" title="Klik untuk kalibrasi kompas">
                         <div class="compass-ring"></div>
                         <div class="compass-card-dial">
                             <span class="direction-label north">U</span>
@@ -274,11 +274,12 @@
                             <span class="direction-label south">S</span>
                             <span class="direction-label west">B</span>
                         </div>
-                        <div class="kaaba-icon-marker">🕋</div>
                         <div class="compass-needle" id="qiblaNeedle">
+                            <div class="kaaba-icon-marker">🕋</div>
                             <div class="needle-north"></div>
                             <div class="needle-south"></div>
                         </div>
+                        <div class="compass-pivot"></div>
                     </div>
                 </div>
 
@@ -377,6 +378,43 @@
                             <option value="5">Karachi</option>
                         </select>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calibration Modal -->
+        <div class="modal-backdrop" id="calibrationModal">
+            <div class="modal-content glass-card" style="text-align: center; padding: 24px; max-width: 400px;">
+                <div class="modal-header" style="border-bottom: none; margin-bottom: 8px; justify-content: center;">
+                    <h3 style="color: var(--accent-gold); font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="compass" class="icon-gold"></i> Kalibrasi Kompas
+                    </h3>
+                </div>
+                <div class="modal-body" style="gap: 16px;">
+                    <div style="display: flex; justify-content: center; margin: 10px 0; position: relative;">
+                        <!-- Infinity Loop Tracing Animation -->
+                        <svg width="120" height="60" viewBox="0 0 120 60" style="display: block;">
+                            <path d="M 60,30 C 45,10 15,10 15,30 C 15,50 45,50 60,30 C 75,10 105,10 105,30 C 105,50 75,50 60,30 Z" 
+                                  fill="none" stroke="rgba(212, 175, 55, 0.15)" stroke-width="4" stroke-linecap="round"/>
+                            <path class="infinity-trace" d="M 60,30 C 45,10 15,10 15,30 C 15,50 45,50 60,30 C 75,10 105,10 105,30 C 105,50 75,50 60,30 Z" 
+                                  fill="none" stroke="var(--accent-gold)" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                        <!-- Floating tilting phone inside the infinity loop -->
+                        <div class="calibration-phone" style="position: absolute; top: 18px; left: 50%; margin-left: -12px; color: var(--accent-gold-light);">
+                            <i data-lucide="smartphone" style="width: 24px; height: 24px;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.88rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 4px;">
+                        Untuk akurasi penunjuk arah Kiblat yang maksimal, silakan kalibrasi sensor kompas HP Anda dengan cara:
+                    </p>
+                    <ol style="text-align: left; font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); padding-left: 20px; margin-bottom: 8px;">
+                        <li>Pegang HP Anda dalam posisi mendatar (horizontal).</li>
+                        <li>Gerakkan HP Anda membentuk pola gerakan <strong>angka 8</strong> di udara beberapa kali.</li>
+                        <li>Jauhkan HP dari benda logam besar atau medan magnet (misalnya speaker/kabel listrik) agar sensor tidak terganggu.</li>
+                    </ol>
+                    <button class="btn-primary" id="btnCloseCalibration" style="justify-content: center; width: 100%; margin-top: 8px;">
+                        Saya Mengerti, Mulai
+                    </button>
                 </div>
             </div>
         </div>
