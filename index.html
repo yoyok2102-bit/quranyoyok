@@ -161,10 +161,10 @@
             background: var(--accent-gold);
         }
 
-        /* App Main Container (Max Width mimicking modern mobile/desktop blend) */
+        /* App Main Container — Full bleed on all screen sizes */
         .app-container {
             width: 100%;
-            max-width: 540px;
+            max-width: 100%; /* Always fill full width on mobile */
             min-height: 100vh;
             min-height: calc(var(--vh, 1vh) * 100);
             display: flex;
@@ -172,8 +172,8 @@
             position: relative;
             background: radial-gradient(circle at top right, rgba(13, 92, 58, 0.15) 0%, transparent 60%),
                 radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.05) 0%, transparent 60%);
-            border-left: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
+            border-left: none;  /* No borders on mobile — full bleed */
+            border-right: none;
             padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
             /* space for nav with safe area */
         }
@@ -1957,16 +1957,34 @@
             }
         }
 
-        /* Desktop Responsiveness details */
-        @media (min-width: 600px) {
+        /* ===================================================
+           RESPONSIVE LAYOUT SYSTEM
+           Foldable Folded (<360px) | Mobile (360-767px) | Foldable Unfolded (717-1023px) | Tablet (768-1023px) | Desktop (>=1024px)
+           =================================================== */
+
+        /* -----------------------------------------------
+           Narrow screen: show decorative outer background
+           only when container can actually float inside it
+           ----------------------------------------------- */
+        @media (min-width: 600px) and (max-width: 767px) {
             body {
                 background-color: #030605;
-                /* Deep black outside the container */
+                justify-content: center;
             }
-
             body.theme-light {
                 background-color: #e2e8e4;
-                /* Soft sage/light grey outside container in light theme */
+            }
+            /* Give it the 'phone floating' look only at 600-767px where viewport is wide enough */
+            .app-container {
+                max-width: 540px;
+                border-left: 1px solid var(--border-color);
+                border-right: 1px solid var(--border-color);
+            }
+            .app-nav {
+                max-width: 540px;
+            }
+            .floating-audio-player {
+                max-width: 508px;
             }
         }
 
@@ -1974,91 +1992,502 @@
         body.theme-light .arabic-preview {
             background: rgba(13, 92, 58, 0.06);
         }
-
         body.theme-light .tabs-container {
             background: rgba(13, 92, 58, 0.08);
         }
-
         body.theme-light .compass-wrapper {
             background: radial-gradient(circle, var(--bg-card) 40%, rgba(13, 92, 58, 0.15) 100%);
             border: 3px solid var(--accent-gold);
             box-shadow: 0 8px 36px var(--shadow-color);
         }
-
         body.theme-light .needle-south {
             border-top: 80px solid rgba(13, 92, 58, 0.25);
         }
 
-        /* Mobile viewport optimization for budget phones */
-        @media (max-width: 768px) {
+        /* -----------------------------------------------
+           Mobile viewport optimization for budget phones
+           ----------------------------------------------- */
+        @media (max-width: 767px) {
             :root {
                 --glass-blur: none;
                 --bg-surface: rgba(10, 15, 13, 0.98);
-                /* Matching dark base with high opacity to block background text */
                 --bg-card: rgba(26, 41, 35, 0.92);
             }
-
             body.theme-light {
                 --bg-surface: rgba(244, 248, 246, 0.98);
-                /* Matching light base with high opacity */
                 --bg-card: rgba(255, 255, 255, 0.96);
+            }
+            /* Ensure full-bleed at all mobile widths */
+            .app-container {
+                width: 100%;
+                max-width: 100%;
+                border-left: none;
+                border-right: none;
+            }
+            .app-nav {
+                width: 100%;
+                max-width: 100%;
+                left: 0;
+                transform: none;
+            }
+            .floating-audio-player {
+                width: calc(100% - 16px);
+                max-width: calc(100% - 16px);
+                left: 8px;
+                transform: translateY(120px);
+            }
+            .floating-audio-player.visible {
+                transform: translateY(0);
             }
         }
 
-        /* Mobile specific layout fixes for narrow devices (Android & iPhone) */
-        @media (max-width: 480px) {
+        /* -----------------------------------------------
+           GALAXY FOLD & ULTRA-NARROW FOLDABLE (280px–359px)
+           Samsung Galaxy Fold folded = ~280px viewport
+           ----------------------------------------------- */
+        @media (max-width: 359px) {
+            :root {
+                --glass-blur: none;
+            }
+            .app-header {
+                padding: calc(10px + env(safe-area-inset-top, 0px)) 10px 10px 10px;
+                gap: 6px;
+            }
+            .brand-logo {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+            }
+            .brand-logo i, .brand-logo svg { width: 14px; height: 14px; }
+            .brand-text h1 { font-size: 0.82rem; letter-spacing: 0; }
+            .sub-brand { display: none; } /* Hide subtitle to save space */
+            .header-status {
+                max-width: 90px;
+                font-size: 0.6rem;
+                padding: 3px 6px;
+                gap: 3px;
+            }
+            .header-status i, .header-status svg { width: 9px; height: 9px; }
+            .icon-btn { width: 28px; height: 28px; }
+            .icon-btn i, .icon-btn svg { width: 14px; height: 14px; }
+
+            /* Compress main padding */
+            .app-main { padding: 10px; }
+
+            /* Hero card compact */
+            .hero-card { padding: 14px; border-radius: 12px; margin-bottom: 14px; }
+            .hero-card h2 { font-size: 1.1rem; margin: 4px 0 2px 0; }
+            .hero-card p { font-size: 0.72rem; margin-bottom: 8px; }
+            .hero-art { display: none; } /* Hide decorative art */
+            .hero-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .btn-primary { font-size: 0.72rem; padding: 6px 10px; gap: 5px; }
+
+            /* Search & tabs compact */
+            .search-box { padding: 8px 10px; }
+            .search-box input { font-size: 0.8rem; }
+            .tab-btn { font-size: 0.7rem; padding: 6px 4px; }
+
+            /* Surah card compact */
+            .surah-card { padding: 10px 10px; }
+            .surah-number-badge { width: 28px; height: 28px; font-size: 0.68rem; }
+            .surah-meta h3 { font-size: 0.82rem; }
+            .surah-meta p { font-size: 0.65rem; }
+            .surah-arabic { font-size: 1.1rem; }
+            .surah-left { gap: 8px; }
+
+            /* Prayer cards 1-col on ultra-narrow */
+            .prayer-schedule-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .prayer-card { padding: 10px 10px; }
+            .prayer-name { font-size: 0.72rem; }
+            .prayer-time { font-size: 0.95rem; }
+            .prayer-countdown-card { padding: 16px; border-radius: 14px; }
+            .countdown-timer { font-size: 2rem; }
+
+            /* Compass smaller */
+            .compass-wrapper { width: 180px; height: 180px; }
+            .compass-header h2 { font-size: 1rem; }
+            .compass-header p { font-size: 0.65rem; }
+
+            /* Bismillah smaller */
+            .bismillah-container { font-size: 1.6rem; margin: 14px 0 18px 0; }
+
+            /* Ayah row compact */
+            .ayah-row { padding: 10px; }
+            .ayah-arabic { font-size: 1.4rem; line-height: 1.7; }
+            .ayah-translation { font-size: 0.78rem; }
+            .ayah-transliteration { font-size: 0.7rem; }
+
+            /* Bottom nav compact */
+            .app-nav { height: calc(58px + env(safe-area-inset-bottom, 0px)); }
+            .nav-item { padding: 4px 6px; font-size: 0.62rem; gap: 3px; }
+            .nav-item i { width: 18px; height: 18px; }
+
+            /* Glass card compact */
+            .glass-card { padding: 12px; }
+        }
+
+        /* -----------------------------------------------
+           NARROW MOBILE (360px–479px) - Most Android phones
+           ----------------------------------------------- */
+        @media (min-width: 360px) and (max-width: 479px) {
             .app-header {
                 padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 12px 12px;
             }
+            .brand-logo { width: 32px; height: 32px; }
+            .brand-logo i, .brand-logo svg { width: 16px; height: 16px; }
+            .brand-text h1 { font-size: 0.95rem; }
+            .sub-brand { font-size: 0.65rem; }
+            .header-status { max-width: 115px; font-size: 0.68rem; padding: 4px 8px; gap: 4px; }
+            .header-status i, .header-status svg { width: 11px; height: 11px; }
+            .icon-btn { width: 32px; height: 32px; }
+            .nav-item { padding: 6px 8px; font-size: 0.72rem; gap: 4px; }
+            .nav-item i { width: 20px; height: 20px; }
+        }
 
-            .brand-logo {
-                width: 32px;
-                height: 32px;
+        /* -----------------------------------------------
+           STANDARD MOBILE (480px–599px) - Large phones (iPhone Plus etc)
+           ----------------------------------------------- */
+        @media (min-width: 480px) and (max-width: 599px) {
+            .app-main { padding: 16px 18px; }
+            .app-header { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px 16px; }
+            .hero-card h2 { font-size: 1.7rem; }
+        }
+
+        /* -----------------------------------------------
+           FOLDABLE UNFOLDED + SMALL TABLET (600px–767px)
+           Samsung Galaxy Z Fold unfolded inner = ~717-882px
+           This range handles both small tablets and unfolded foldables
+           ----------------------------------------------- */
+        @media (min-width: 600px) and (max-width: 767px) {
+            /* Already handled above for floating phone look */
+        }
+
+        /* ====================================================
+           TABLET LAYOUT (768px – 1023px)
+           Wider centered layout, bigger nav bar, 2-col prayer grid
+           ==================================================== */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            body {
+                align-items: flex-start;
+                justify-content: center;
+                background-color: #030605;
+            }
+            body.theme-light { background-color: #e2e8e4; }
+
+            .app-container {
+                max-width: 100%; /* Full bleed on tablet too */
+                border-left: none;
+                border-right: none;
+                border-radius: 0;
             }
 
-            .brand-logo i,
-            .brand-logo svg {
-                width: 16px;
-                height: 16px;
+            .app-header {
+                padding: calc(20px + env(safe-area-inset-top, 0px)) 32px 18px 32px;
             }
 
-            .brand-text h1 {
-                font-size: 0.95rem;
+            .brand-text h1 { font-size: 1.25rem; }
+            .sub-brand { font-size: 0.78rem; }
+            .brand-logo { width: 44px; height: 44px; }
+
+            .app-main { padding: 24px 32px; }
+
+            /* Larger hero card on tablet */
+            .hero-card { padding: 28px 32px; border-radius: 20px; }
+            .hero-card h2 { font-size: 2rem; }
+
+            /* Prayer grid 3-col on tablet */
+            .prayer-schedule-container {
+                grid-template-columns: repeat(3, 1fr);
             }
 
-            .sub-brand {
-                font-size: 0.65rem;
+            /* Wider compass on tablet */
+            .compass-wrapper { width: 260px; height: 260px; }
+
+            /* Navigation bar full-width on tablet */
+            .app-nav {
+                max-width: 100%;
+                left: 0;
+                transform: none;
+                height: calc(76px + env(safe-area-inset-bottom, 0px));
+            }
+            .nav-item { padding: 10px 20px; font-size: 0.82rem; }
+            .nav-item i { width: 24px; height: 24px; }
+
+            /* Audio player full-width on tablet */
+            .floating-audio-player {
+                width: calc(100% - 32px);
+                max-width: calc(100% - 32px);
+                left: 16px;
+                transform: translateY(120px);
+            }
+            .floating-audio-player.visible {
+                transform: translateY(0);
             }
 
-            .header-status {
-                max-width: 115px;
+            /* Quran list 2-col grid on tablet */
+            .quran-list-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            /* Bismillah bigger on tablet */
+            .bismillah-container { font-size: 2.6rem; }
+
+            /* Ayah text bigger on tablet */
+            .ayah-arabic { font-size: 2rem; }
+        }
+
+        /* ====================================================
+           DESKTOP LAYOUT (>= 1024px)
+           2-column: fixed sidebar + scrollable content area
+           ==================================================== */
+
+        /* Desktop sidebar navigation (hidden on mobile/tablet) */
+        .desktop-sidebar {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            body {
+                justify-content: center;
+                align-items: flex-start;
+                background-color: #030605;
+            }
+            body.theme-light { background-color: #e2e8e4; }
+
+            /* Full-width desktop wrapper */
+            .app-container {
+                max-width: 1280px;
+                width: 100%;
+                flex-direction: row;
+                min-height: 100vh;
+                border-left: none;
+                border-right: none;
+                padding-bottom: 0;
+                background: radial-gradient(circle at top right, rgba(13, 92, 58, 0.18) 0%, transparent 55%),
+                    radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.07) 0%, transparent 55%);
+            }
+
+            /* Hide mobile bottom navigation */
+            .app-nav {
+                display: none !important;
+            }
+
+            /* Desktop sidebar */
+            .desktop-sidebar {
+                display: flex;
+                flex-direction: column;
+                width: 240px;
+                min-width: 240px;
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                background: var(--bg-surface);
+                backdrop-filter: var(--glass-blur);
+                -webkit-backdrop-filter: var(--glass-blur);
+                border-right: 1px solid var(--border-color);
+                padding: 28px 16px 24px 16px;
+                gap: 6px;
+                z-index: 50;
+                overflow-y: auto;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+                flex-shrink: 0;
+            }
+
+            .sidebar-brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 0 8px 20px 8px;
+                border-bottom: 1px solid var(--border-color);
+                margin-bottom: 10px;
+            }
+
+            .sidebar-brand-logo {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                border: 1px solid var(--accent-gold);
+                box-shadow: 0 0 10px rgba(212,175,55,0.25);
+                object-fit: cover;
+                flex-shrink: 0;
+            }
+
+            .sidebar-brand-text { min-width: 0; }
+
+            .sidebar-brand-text h2 {
+                font-size: 0.92rem;
+                font-weight: 700;
+                background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-accent) 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                white-space: nowrap;
+            }
+
+            .sidebar-brand-text span {
                 font-size: 0.68rem;
-                padding: 4px 8px;
-                gap: 4px;
+                color: var(--text-secondary);
             }
 
-            .header-status i,
-            .header-status svg {
-                width: 11px;
-                height: 11px;
+            .sidebar-nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                border-radius: 12px;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                color: var(--text-secondary);
+                font-size: 0.88rem;
+                font-weight: 600;
+                width: 100%;
+                text-align: left;
+                transition: var(--transition-smooth);
             }
 
-            .icon-btn {
-                width: 32px;
-                height: 32px;
-            }
-
-            .nav-item {
-                padding: 6px 8px;
-                font-size: 0.72rem;
-                gap: 4px;
-            }
-
-            .nav-item i {
+            .sidebar-nav-item i {
                 width: 20px;
                 height: 20px;
+                flex-shrink: 0;
+                transition: var(--transition-smooth);
             }
+
+            .sidebar-nav-item:hover {
+                background: rgba(13, 92, 58, 0.12);
+                color: var(--text-primary);
+            }
+
+            .sidebar-nav-item.active {
+                background: linear-gradient(135deg, rgba(13, 92, 58, 0.3) 0%, rgba(212, 175, 55, 0.08) 100%);
+                color: var(--text-accent);
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                box-shadow: 0 2px 12px rgba(13, 92, 58, 0.2);
+            }
+
+            .sidebar-nav-item.active i {
+                color: var(--text-accent);
+                filter: drop-shadow(0 0 4px rgba(212,175,55,0.4));
+            }
+
+            .sidebar-divider {
+                height: 1px;
+                background: var(--border-color);
+                margin: 8px 0;
+            }
+
+            .sidebar-actions {
+                margin-top: auto;
+                padding-top: 16px;
+                border-top: 1px solid var(--border-color);
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .sidebar-action-btn {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 14px;
+                border-radius: 10px;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                color: var(--text-secondary);
+                font-size: 0.85rem;
+                font-weight: 600;
+                width: 100%;
+                text-align: left;
+                transition: var(--transition-smooth);
+            }
+
+            .sidebar-action-btn i { width: 18px; height: 18px; flex-shrink: 0; }
+
+            .sidebar-action-btn:hover {
+                background: rgba(13, 92, 58, 0.1);
+                color: var(--text-primary);
+            }
+
+            /* Header adapts for desktop */
+            .app-header {
+                padding: 20px 36px;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+
+            /* Main content column */
+            .desktop-content-wrapper {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                min-width: 0;
+                overflow-y: auto;
+            }
+
+            .app-main {
+                padding: 28px 36px;
+                max-width: 860px;
+            }
+
+            /* Audio player aligned to content area */
+            .floating-audio-player {
+                left: calc(240px + (100% - 240px) / 2);
+                max-width: 780px;
+                width: calc(100% - 240px - 32px);
+                bottom: 24px;
+                transform: translateX(-50%) translateY(120px);
+            }
+            .floating-audio-player.visible {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            /* Desktop: hero card wider */
+            .hero-card { padding: 30px 36px; }
+            .hero-card h2 { font-size: 2.2rem; }
+
+            /* Prayer grid 3-col on desktop */
+            .prayer-schedule-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* Larger compass on desktop */
+            .compass-wrapper { width: 280px; height: 280px; }
+
+            /* Quran list 2-col grid on desktop */
+            .quran-list-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            /* Tabs wider */
+            .tab-btn { padding: 10px 10px; font-size: 0.85rem; }
+
+            /* Ayah text slightly bigger on desktop */
+            .ayah-arabic { font-size: 2.1rem; }
+
+            /* No padding-bottom since no bottom nav */
+            .app-container { padding-bottom: 0; }
         }
+
+        /* ====================================================
+           LARGE DESKTOP (>= 1440px) - Even more spacious
+           ==================================================== */
+        @media (min-width: 1440px) {
+            .app-container { max-width: 1440px; }
+            .desktop-sidebar { width: 270px; min-width: 270px; padding: 32px 20px; }
+            .app-main { max-width: 980px; padding: 32px 48px; }
+            .hero-card h2 { font-size: 2.4rem; }
+        }
+
 
         /* PWA Install Banner Styling */
         .pwa-install-banner {
@@ -2210,6 +2639,51 @@
 
     <!-- App Container -->
     <div class="app-container" id="appContainer">
+
+        <!-- Desktop Sidebar Navigation (visible on >= 1024px only) -->
+        <aside class="desktop-sidebar" id="desktopSidebar">
+            <!-- Sidebar Brand -->
+            <div class="sidebar-brand">
+                <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhC1C2P1aw73H6puXaFKvdGdfr88GfJX2Qx4VJmkbLnFA7IVt4EC5-p4PPTMlYrlUTyd6AGyBmYo5ugB_tQ4VxxCpfI2pDG_V-D1kf0uLbAwBRSvCudzbkHX5ZQmP9X2PzbMjM5ujhVjuwhVsqb5Zw1zwGH_cIeEVAvyKhOt74Gxm7TtDZWnn8HZ4ct8CCC/s1600/Al%20Quran%20Transparant.png"
+                    alt="Logo" class="sidebar-brand-logo">
+                <div class="sidebar-brand-text">
+                    <h2>Al Quran &amp; Sholat</h2>
+                    <span>Sesuai Kemenag RI</span>
+                </div>
+            </div>
+
+            <!-- Sidebar Nav Items -->
+            <button class="sidebar-nav-item active" data-page="quran" id="sidebarNavQuran">
+                <i data-lucide="book-marked"></i>
+                <span>Al-Quran</span>
+            </button>
+            <button class="sidebar-nav-item" data-page="prayer" id="sidebarNavPrayer">
+                <i data-lucide="clock"></i>
+                <span>Waktu Shalat</span>
+            </button>
+            <button class="sidebar-nav-item" data-page="qibla" id="sidebarNavQibla">
+                <i data-lucide="compass"></i>
+                <span>Arah Kiblat</span>
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <!-- Sidebar Action Buttons -->
+            <div class="sidebar-actions">
+                <button class="sidebar-action-btn" id="sidebarThemeToggle" title="Ubah Tema">
+                    <i data-lucide="moon"></i>
+                    <span>Ubah Tema</span>
+                </button>
+                <button class="sidebar-action-btn" id="sidebarSettingsToggle" title="Pengaturan">
+                    <i data-lucide="settings"></i>
+                    <span>Pengaturan</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Desktop Content Wrapper (header + main) -->
+        <div class="desktop-content-wrapper">
+
         <!-- Premium Header -->
         <header class="app-header">
             <div class="header-brand">
@@ -2630,6 +3104,9 @@
                 </footer>
             </section>
         </main>
+
+        </div><!-- /desktop-content-wrapper -->
+
 
         <!-- Global Floating Audio Player (Premium Spotify-like layout) -->
         <div class="floating-audio-player" id="globalAudioBar">
@@ -3224,6 +3701,15 @@
                 }
             });
 
+            // Update desktop sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item[data-page]').forEach(item => {
+                if (item.getAttribute('data-page') === pageId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
             // Automatically recalculate Qibla if switched to Qibla page
             if (pageId === 'qibla' && typeof calculateQibla === 'function') {
                 calculateQibla();
@@ -3257,18 +3743,55 @@
 
             const targetPage = document.getElementById(`page-${pageId}`);
             if (targetPage) targetPage.classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            // Scroll to top: on desktop use content wrapper scroll, on mobile use window
+            const contentWrapper = document.querySelector('.desktop-content-wrapper');
+            if (contentWrapper && window.innerWidth >= 1024) {
+                contentWrapper.scrollTo({ top: 0, behavior: 'instant' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }
         }
 
         // Event Listeners Setup
         function setupEventListeners() {
-            // Nav Items click
+            // Nav Items click (bottom navigation)
             if (DOM.navItems) {
                 DOM.navItems.forEach(item => {
                     item.addEventListener('click', () => {
                         const page = item.getAttribute('data-page');
                         switchPage(page);
                     });
+                });
+            }
+
+            // Desktop Sidebar Nav Items
+            document.querySelectorAll('.sidebar-nav-item[data-page]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.getAttribute('data-page');
+                    switchPage(page);
+                });
+            });
+
+            // Desktop Sidebar Theme Toggle
+            const sidebarThemeBtn = document.getElementById('sidebarThemeToggle');
+            if (sidebarThemeBtn) {
+                sidebarThemeBtn.addEventListener('click', () => {
+                    const nextTheme = STATE.settings.theme === 'light' ? 'dark' : 'light';
+                    applyTheme(nextTheme);
+                    // Sync icon label in sidebar
+                    const icon = sidebarThemeBtn.querySelector('i, svg');
+                    const label = sidebarThemeBtn.querySelector('span');
+                    if (icon) icon.setAttribute('data-lucide', nextTheme === 'light' ? 'sun' : 'moon');
+                    if (label) label.textContent = nextTheme === 'light' ? 'Tema Terang' : 'Ubah Tema';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                });
+            }
+
+            // Desktop Sidebar Settings Toggle
+            const sidebarSettingsBtn = document.getElementById('sidebarSettingsToggle');
+            if (sidebarSettingsBtn) {
+                sidebarSettingsBtn.addEventListener('click', () => {
+                    if (DOM.settingsModal) DOM.settingsModal.classList.add('visible');
                 });
             }
 
